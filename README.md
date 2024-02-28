@@ -5,7 +5,7 @@
 
 A simple command-line program for managing remote files, using the HTTP protocol for transmission. It supports concurrent downloading and uploading, does not support multi-level directories, and also provides commands for concurrent downloading of regular HTTP URLs.
 
-[English](./README.md) | 中文
+English | [中文](./README.zh-CN.md)
 
 ## Installation
 
