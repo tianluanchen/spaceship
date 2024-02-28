@@ -15,7 +15,6 @@ var rootCmd = &cobra.Command{
 	Use:   "spaceship",
 	Short: "Concurrent HTTP downloader, uploader client and server",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-
 		debug, _ := cmd.Flags().GetBool("debug")
 		if debug {
 			logger.SetDebugLevel()
@@ -25,8 +24,10 @@ var rootCmd = &cobra.Command{
 		if cmd.Name() == "fetch" {
 			return
 		}
-		for i := 0; i < len(args); i++ {
-			args[i] = pkg.CleanPath(args[i])
+		if cmd.Name() != "conf" {
+			for i := 0; i < len(args); i++ {
+				args[i] = pkg.CleanPath(args[i])
+			}
 		}
 
 		viper.SetDefault(NameServerURL, "")
