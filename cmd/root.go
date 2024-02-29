@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{
 		} else {
 			logger.SetInfoLevel()
 		}
-		if cmd.Name() == "fetch" {
+		if name := cmd.Name(); name == "fetch" || name == "version" {
 			return
 		}
 		if cmd.Name() != "conf" {

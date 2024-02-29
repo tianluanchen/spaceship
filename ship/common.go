@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 )
 
+var Version = "0.0.0"
+
 const (
 	AuthHeader = "auth"
 )

@@ -32,7 +32,7 @@ build_with_osarch() {
     fi
     output=$(echo "${output}${suffix}" | sed "s/#MOD#/${mod_basename}/g" | sed "s/#OS#/${GOOS}/g" | sed "s/#ARCH#/${GOARCH}/g")
     echo "building for $(go env GOOS)/$(go env GOARCH)  ==>  ${output}"
-    go build -ldflags "-s -w " \
+    go build -ldflags "-s -w $LDFLAGS" \
         -gcflags="all=-trimpath=${PWD}" \
         -asmflags="all=-trimpath=${PWD}" \
         -o "${output}"
@@ -45,6 +45,8 @@ if [ -d $output_dir ]; then
 fi
 
 mkdir -p $output_dir
+
+LDFLAGS="-X github.com/tianluanchen/spaceship/ship.Version=0.0.$(date -u +"%Y%m%d%H%M%S")"
 
 targets=("linux/amd64" "linux/arm64" "windows/arm64" "windows/amd64" "darwin/amd64" "darwin/arm64")
 
