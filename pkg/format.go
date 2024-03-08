@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func FormatSize[T int | int32 | int64](v T, concat ...func(v float64, unit string) string) string {
+func FormatSize[T int | int32 | int64 | uint | uint32 | uint64](v T, concat ...func(v float64, unit string) string) string {
 	cb := func(v float64, unit string) string {
 		integer := int64(v)
 		if float64(integer) == float64(v) {
