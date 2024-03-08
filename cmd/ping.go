@@ -30,14 +30,14 @@ var pingCmd = &cobra.Command{
 			},
 		})
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 		}
 		auth, _ := cmd.Flags().GetString("auth")
 		client.SetAuth(handleAuth(auth), true)
 		n, _ := cmd.Flags().GetInt("count")
 		interval, _ := cmd.Flags().GetDuration("interval")
 		if interval < time.Millisecond*400 {
-			logger.Fatal("interval too small, minimum 400ms")
+			logger.Fatalln("interval too small, minimum 400ms")
 		}
 		fmt.Printf("Pinging %s :\n", client.GetPingURL())
 		for i := 0; i < n || n < 0; i++ {

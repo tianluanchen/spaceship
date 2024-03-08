@@ -19,7 +19,7 @@ var putCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 || len(args) > 2 {
-			logger.Fatal("args length error, require <local path> <remote path?>")
+			logger.Fatalln("args length error, require <local path> <remote path?>")
 		}
 		num, _ := cmd.Flags().GetInt("num")
 		if num <= 0 {
@@ -42,7 +42,7 @@ var putCmd = &cobra.Command{
 			},
 		})
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 		}
 		auth, _ := cmd.Flags().GetString("auth")
 		client.SetAuth(handleAuth(auth), true)
@@ -57,13 +57,13 @@ var putCmd = &cobra.Command{
 		}
 		overwrite, _ := cmd.Flags().GetBool("overwrite")
 		if overwrite {
-			logger.Warn("if remote file or upload task exists, overwrite")
+			logger.Warnln("if remote file or upload task exists, overwrite")
 		}
 		var bar *progressbar.ProgressBar
-		logger.Debug("target url:", client.GetUploadFileURL(remoteFile))
+		logger.Debugln("target url:", client.GetUploadFileURL(remoteFile))
 		if err := client.Put(num, overwrite, localFile, remoteFile, func(beforeUpload bool, info ship.UploadInfo, n int) {
 			if beforeUpload {
-				logger.Debug("task id:", info.TaskID)
+				logger.Debugln("task id:", info.TaskID)
 				bar = newBar(info.TotalSize, progressbar.OptionSetDescription("Uploading [cyan]"+localFile+"[reset] to [green]"+info.Path+"[reset]..."))
 			} else {
 				bar.Add(n)
@@ -73,13 +73,13 @@ var putCmd = &cobra.Command{
 				bar.Exit()
 				fmt.Println()
 			}
-			logger.Fatal("upload failed:", err.Error())
+			logger.Fatalln("upload failed:", err.Error())
 			return
 		}
 		bar.Clear()
 		bar.Close()
 		fmt.Println(bar.String())
-		logger.Info("upload success")
+		logger.Infoln("upload success")
 	},
 }
 

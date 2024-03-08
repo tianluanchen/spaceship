@@ -45,10 +45,10 @@ var confCmd = &cobra.Command{
 
 		if rm {
 			if filename == "" {
-				logger.Fatal("no used config file")
+				logger.Fatalln("no used config file")
 			}
 			if err := os.Remove(filename); err != nil {
-				logger.Fatal(err)
+				logger.Fatalln(err)
 			} else {
 				logger.Infof("remove config file %s successfully", filename)
 			}
@@ -56,18 +56,18 @@ var confCmd = &cobra.Command{
 		}
 		if writeAuth {
 			if len(args) != 0 {
-				logger.Fatal("not require args")
+				logger.Fatalln("not require args")
 			}
 			viper.Set(NameAuthKeyHash, "")
 			viper.Set(NameAuthKeyHash, handleAuth(""))
 		} else if write {
 			if len(args) != 2 {
-				logger.Fatal("args length error, require <key> <value>")
+				logger.Fatalln("args length error, require <key> <value>")
 			}
 			viper.Set(args[0], args[1])
 		} else if unset {
 			if len(args) == 0 {
-				logger.Fatal("args length error, require <key> ...")
+				logger.Fatalln("args length error, require <key> ...")
 			}
 			configMap := viper.AllSettings()
 
@@ -76,7 +76,7 @@ var confCmd = &cobra.Command{
 			}
 			bs, _ := json.MarshalIndent(configMap, "", " ")
 			if err := viper.ReadConfig(bytes.NewReader(bs)); err != nil {
-				logger.Fatal(err)
+				logger.Fatalln(err)
 			}
 		}
 		if err := viper.WriteConfig(); err != nil {
@@ -84,7 +84,7 @@ var confCmd = &cobra.Command{
 				err = viper.SafeWriteConfig()
 			}
 			if err != nil {
-				logger.Fatal(err)
+				logger.Fatalln(err)
 			}
 		}
 	},

@@ -24,6 +24,8 @@ const (
 	NameServerURL          = "ServerURL"
 )
 
+var logger = pkg.NewLogger()
+
 func newBar(max int64, options ...progressbar.Option) *progressbar.ProgressBar {
 	options = append([]progressbar.Option{
 		progressbar.OptionSpinnerType(14),
@@ -58,7 +60,7 @@ func handleAuth(auth string) (authHash string) {
 		fmt.Printf("Please input auth key: ")
 		password, err := term.ReadPassword(int(os.Stdin.Fd()))
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 		}
 		auth = string(password)
 		for i := 0; i < len(auth); i++ {

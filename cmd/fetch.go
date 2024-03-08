@@ -21,10 +21,10 @@ var fetchCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 || len(args) > 2 {
-			logger.Fatal("args length error, require <url> <output file?>")
+			logger.Fatalln("args length error, require <url> <output file?>")
 		}
 		if u, err := pkg.FixURL(args[0]); err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 		} else {
 			args[0] = u.String()
 			if len(args) == 1 {
@@ -84,7 +84,7 @@ var fetchCmd = &cobra.Command{
 			},
 		})
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 			return
 		}
 		for key, value := range h {
@@ -95,15 +95,15 @@ var fetchCmd = &cobra.Command{
 		}
 		supported, length, err := fetcher.Inspect(args[0])
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 			return
 		}
 		if !supported {
-			logger.Warn("not support ranges")
+			logger.Warnln("not support ranges")
 		}
 		fw, err := ship.NewFileWriter(args[1])
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 			return
 		}
 		defer fw.Close()
@@ -119,13 +119,13 @@ var fetchCmd = &cobra.Command{
 		}); err != nil {
 			bar.Exit()
 			fmt.Println()
-			logger.Fatal("download failed:", err.Error())
+			logger.Fatalln("download failed:", err.Error())
 			return
 		}
 		bar.Finish()
 		fmt.Println()
 		fw.Truncate(fw.WrittenN())
-		logger.Info("download success")
+		logger.Infoln("download success")
 	},
 }
 

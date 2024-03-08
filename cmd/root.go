@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"strings"
 
 	"github.com/tianluanchen/spaceship/pkg"
 
@@ -9,17 +10,23 @@ import (
 	"github.com/spf13/viper"
 )
 
-var logger = pkg.NewLogger(nil)
-
 var rootCmd = &cobra.Command{
 	Use:   "spaceship",
 	Short: "Concurrent HTTP downloader, uploader client and server",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		debug, _ := cmd.Flags().GetBool("debug")
-		if debug {
-			logger.SetDebugLevel()
-		} else {
-			logger.SetInfoLevel()
+		level, _ := cmd.Flags().GetString("level")
+		level = strings.ToUpper(level)
+		switch level {
+		case "DEBUG":
+			pkg.SetLogLevel(pkg.LDEBUG)
+		case "INFO":
+			pkg.SetLogLevel(pkg.LINFO)
+		case "WARN":
+			pkg.SetLogLevel(pkg.LWARN)
+		case "ERROR":
+			pkg.SetLogLevel(pkg.LERROR)
+		case "FATAL":
+			pkg.SetLogLevel(pkg.LFATAL)
 		}
 		if name := cmd.Name(); name == "fetch" || name == "version" {
 			return
@@ -41,7 +48,7 @@ var rootCmd = &cobra.Command{
 		viper.AddConfigPath("$HOME")
 
 		if err := viper.ReadInConfig(); err != nil {
-			logger.Debug("read conf error:", err)
+			logger.Debugln("read conf error:", err)
 		}
 
 		bindSpacestationWithViper(cmd)
@@ -57,5 +64,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().BoolP("debug", "d", false, "debug mode")
+	rootCmd.PersistentFlags().String("level", "INFO", "log level, DEBUG INFO WARN ERROR FATAL")
 }

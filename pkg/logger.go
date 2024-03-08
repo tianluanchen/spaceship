@@ -1,176 +1,166 @@
 package pkg
 
 import (
+	"fmt"
 	"io"
-	"log"
 	"os"
+	"runtime"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 )
 
 // log level
 const (
-	lDEBUG = iota + 1
-	lINFO
-	lWARN
-	lERROR
-	lFATAL
+	LDEBUG = iota + 1 // 1
+	LINFO             // 2
+	LWARN             // 3
+	LERROR            // 4
+	LFATAL            // 5
 )
 
-type Logger struct {
-	level       int
-	output      io.Writer
-	debugLogger *log.Logger
-	warnLogger  *log.Logger
-	infoLogger  *log.Logger
-	errorLogger *log.Logger
-	fatalLogger *log.Logger
-}
-
 var logMutex sync.Mutex
+var logOuput io.Writer = os.Stderr
+var logLevel int = LDEBUG
 
-func NewLoggerWithPrefix(w io.Writer, prefix string) *Logger {
-	if w == nil {
-		w = os.Stderr
-	}
-	flag := log.Ldate | log.Ltime | log.Lmsgprefix
-	return &Logger{
-		level:       lDEBUG,
-		output:      w,
-		debugLogger: log.New(w, "[DEBUG] "+prefix, flag),
-		warnLogger:  log.New(w, "[WARN] "+prefix, flag),
-		infoLogger:  log.New(w, "[INFO] "+prefix, flag),
-		errorLogger: log.New(w, "[ERROR] "+prefix, flag),
-		fatalLogger: log.New(w, "[FATAL] "+prefix, flag),
-	}
+func doWithLock(f func()) {
+	logMutex.Lock()
+	defer logMutex.Unlock()
+	f()
 }
 
-func NewLogger(w io.Writer) *Logger {
-	return NewLoggerWithPrefix(w, "")
+// if level >= logLevel, continue
+func checkLogLevel(level int) bool {
+	return level >= logLevel
 }
-func (l *Logger) SetDebugLevel() {
-	l.level = lDEBUG
+
+func SetLogOutput(w io.Writer) {
+	doWithLock(func() {
+		logOuput = w
+	})
 }
-func (l *Logger) SetWarnLevel() {
-	l.level = lWARN
+
+// use LDEBUG, LINFO, LWARN, LERROR, LFATAL
+func SetLogLevel(level int) {
+	doWithLock(func() {
+		logLevel = level
+	})
 }
-func (l *Logger) SetInfoLevel() {
-	l.level = lINFO
+
+type Logger struct {
+	prefix string
 }
-func (l *Logger) SetErrorLevel() {
-	l.level = lERROR
+
+func NewLogger(prefix ...string) *Logger {
+	l := &Logger{}
+	if len(prefix) > 0 {
+		l.prefix = prefix[0]
+	}
+	return l
 }
-func (l *Logger) SetFatalLevel() {
-	l.level = lFATAL
+
+// if format is not empty, similar to fmt.Printf
+//
+// if format is empty and ln is false, similar to fmt.Print
+//
+// if format is empty and ln is true, similar to fmt.Println
+func (l *Logger) write(level int, format string, ln bool, v ...any) {
+	if !checkLogLevel(level) {
+		return
+	}
+	buf := &strings.Builder{}
+	buf.WriteString(time.Now().Format("2006-01-02T15:04:05.000Z0700  "))
+
+	switch level {
+	case LDEBUG:
+		buf.WriteString("DEBUG")
+	case LINFO:
+		buf.WriteString("INFO")
+	case LWARN:
+		buf.WriteString("WARN")
+	case LERROR:
+		buf.WriteString("ERROR")
+	case LFATAL:
+		buf.WriteString("FATAL")
+	default:
+		buf.WriteString("UNKNOWN")
+	}
+	buf.WriteString("  ")
+	_, file, line, _ := runtime.Caller(2)
+	// pc, file, line, _ := runtime.Caller(2)
+	// funcName := runtime.FuncForPC(pc).Name()
+	index := strings.LastIndexByte(file, '/')
+	if index > -1 {
+		file = file[index+1:]
+	}
+	buf.WriteString(file + ":" + strconv.Itoa(line) + "  ")
+	buf.WriteString(l.prefix)
+	if format == "" {
+		if ln {
+			fmt.Fprintln(buf, v...)
+		} else {
+			fmt.Fprint(buf, v...)
+			buf.WriteByte('\n')
+		}
+	} else {
+		fmt.Fprintf(buf, format, v...)
+		buf.WriteByte('\n')
+	}
+	doWithLock(func() {
+		fmt.Fprint(logOuput, buf.String())
+	})
 }
 
 func (l *Logger) Debug(v ...interface{}) {
-	if l.level > lDEBUG {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.debugLogger.Println(v...)
+	l.write(LDEBUG, "", false, v...)
 }
-
+func (l *Logger) Debugln(v ...interface{}) {
+	l.write(LDEBUG, "", true, v...)
+}
 func (l *Logger) Debugf(format string, v ...interface{}) {
-	if l.level > lDEBUG {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.debugLogger.Printf(format, v...)
+	l.write(LDEBUG, format, false, v...)
 }
-
 func (l *Logger) Info(v ...interface{}) {
-	if l.level > lINFO {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.infoLogger.Println(v...)
+	l.write(LINFO, "", false, v...)
 }
-
+func (l *Logger) Infoln(v ...interface{}) {
+	l.write(LINFO, "", true, v...)
+}
 func (l *Logger) Infof(format string, v ...interface{}) {
-	if l.level > lINFO {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.infoLogger.Printf(format, v...)
+	l.write(LINFO, format, false, v...)
 }
 
 func (l *Logger) Warn(v ...interface{}) {
-	if l.level > lWARN {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.warnLogger.Println(v...)
+	l.write(LWARN, "", false, v...)
+}
+func (l *Logger) Warnln(v ...interface{}) {
+	l.write(LWARN, "", true, v...)
 }
 
 func (l *Logger) Warnf(format string, v ...interface{}) {
-	if l.level > lWARN {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.warnLogger.Printf(format, v...)
+	l.write(LWARN, format, false, v...)
 }
 
 func (l *Logger) Error(v ...interface{}) {
-	if l.level > lERROR {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.errorLogger.Println(v...)
+	l.write(LERROR, "", false, v...)
 }
-
+func (l *Logger) Errorln(v ...interface{}) {
+	l.write(LERROR, "", true, v...)
+}
 func (l *Logger) Errorf(format string, v ...interface{}) {
-	if l.level > lERROR {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.errorLogger.Printf(format, v...)
+	l.write(LERROR, format, false, v...)
 }
 
 func (l *Logger) Fatal(v ...interface{}) {
-	if l.level > lFATAL {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.fatalLogger.Println(v...)
+	l.write(LFATAL, "", false, v...)
 	os.Exit(1)
 }
-
+func (l *Logger) Fatalln(v ...interface{}) {
+	l.write(LFATAL, "", true, v...)
+	os.Exit(1)
+}
 func (l *Logger) Fatalf(format string, v ...interface{}) {
-	if l.level > lFATAL {
-		return
-	}
-	if l.output == os.Stderr || l.output == os.Stdout {
-		logMutex.Lock()
-		defer logMutex.Unlock()
-	}
-	l.fatalLogger.Printf(format, v...)
+	l.write(LFATAL, format, false, v...)
 	os.Exit(1)
 }

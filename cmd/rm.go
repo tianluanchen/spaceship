@@ -31,15 +31,15 @@ var rmCmd = &cobra.Command{
 			},
 		})
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 		}
 		auth, _ := cmd.Flags().GetString("auth")
 		client.SetAuth(handleAuth(auth), true)
 		if strings.TrimSpace(args[0]) == "" {
-			logger.Fatal("empty path")
+			logger.Fatalln("empty path")
 		}
 		remoteFile := path.Clean(args[0])
-		logger.Debug("target url:", client.GetDeleteFileURL(remoteFile))
+		logger.Debugln("target url:", client.GetDeleteFileURL(remoteFile))
 		if err := client.Delete(remoteFile); err == nil {
 			logger.Infof("delete %s success", remoteFile)
 		} else {

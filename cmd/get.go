@@ -19,7 +19,7 @@ var getCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) < 1 || len(args) > 2 {
-			logger.Fatal("args length error, require <path> <output file?>")
+			logger.Fatalln("args length error, require <path> <output file?>")
 		}
 		num, _ := cmd.Flags().GetInt("num")
 		if num <= 0 {
@@ -42,7 +42,7 @@ var getCmd = &cobra.Command{
 			},
 		})
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 		}
 		auth, _ := cmd.Flags().GetString("auth")
 		client.SetAuth(handleAuth(auth), true)
@@ -63,11 +63,11 @@ var getCmd = &cobra.Command{
 		}
 
 		var bar *progressbar.ProgressBar
-		logger.Debug("target url:", client.GetDownloadFileURL(remoteFile))
+		logger.Debugln("target url:", client.GetDownloadFileURL(remoteFile))
 		if err := client.Get(num, remoteFile, localFile, func(beforeDownload bool, supported bool, length int64, n int) {
 			if beforeDownload {
 				if !supported {
-					logger.Warn("not support ranges")
+					logger.Warnln("not support ranges")
 				}
 				bar = newBar(length, progressbar.OptionSetDescription("Downloading [cyan]"+remoteFile+"[reset] to [green]"+localFile+"[reset]..."))
 			} else {
@@ -78,13 +78,13 @@ var getCmd = &cobra.Command{
 				bar.Exit()
 				fmt.Println()
 			}
-			logger.Fatal("download failed:", err.Error())
+			logger.Fatalln("download failed:", err.Error())
 			return
 		}
 		bar.Clear()
 		bar.Close()
 		fmt.Println(bar.String())
-		logger.Info("download success")
+		logger.Infoln("download success")
 	},
 }
 

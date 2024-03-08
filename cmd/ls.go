@@ -33,11 +33,11 @@ var lsCmd = &cobra.Command{
 			},
 		})
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 		}
 		auth, _ := cmd.Flags().GetString("auth")
 		client.SetAuth(handleAuth(auth), true)
-		logger.Debug("target url:", client.GetListURL())
+		logger.Debugln("target url:", client.GetListURL())
 		utc, _ := cmd.Flags().GetBool("utc")
 		if err := client.List(func(info *ship.FileInfo) {
 			t := time.Unix(info.ModTime, 0)
@@ -61,7 +61,7 @@ var lsCmd = &cobra.Command{
 			}), info.Name)
 
 		}); err != nil {
-			logger.Fatal(err)
+			logger.Fatalln(err)
 		}
 	},
 }
