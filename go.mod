@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/klauspost/compress v1.17.7
 	github.com/schollz/progressbar/v3 v3.14.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.18.2

@@ -94,3 +94,13 @@ func bindSpacestationWithViper(cmd *cobra.Command) {
 	viper.BindPFlag(NameDisallowRedirects, cmd.Flags().Lookup("no-redirect"))
 	viper.BindPFlag(NameInsecureSkipVerify, cmd.Flags().Lookup("insecure"))
 }
+
+func concat(v float64, unit string) string {
+	integer := int64(v)
+	unit = strings.TrimSuffix(unit, "B")
+	if float64(integer) == float64(v) {
+		return fmt.Sprintf("%d%s", integer, unit)
+	} else {
+		return fmt.Sprintf("%.1f%s", v, unit)
+	}
+}

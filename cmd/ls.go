@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/tianluanchen/spaceship/pkg"
@@ -50,15 +49,7 @@ var lsCmd = &cobra.Command{
 			} else {
 				formattedTime = t.Format("2006-01-02 15:04:05")
 			}
-			fmt.Printf("%s %7s  %s\n", formattedTime, pkg.FormatSize(info.Size, func(v float64, unit string) string {
-				integer := int64(v)
-				unit = strings.TrimSuffix(unit, "B")
-				if float64(integer) == float64(v) {
-					return fmt.Sprintf("%d%s", integer, unit)
-				} else {
-					return fmt.Sprintf("%.1f%s", v, unit)
-				}
-			}), info.Name)
+			fmt.Printf("%s %7s  %s\n", formattedTime, pkg.FormatSize(info.Size, concat), info.Name)
 
 		}); err != nil {
 			logger.Fatalln(err)
