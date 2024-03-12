@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mattn/go-isatty"
 )
 
 // log level
@@ -21,8 +23,14 @@ const (
 )
 
 var logMutex sync.Mutex
-var logOuput io.Writer = os.Stderr
+var logOutput io.Writer
 var logLevel int = LDEBUG
+var logColor bool = true
+var logOutputIsTerm bool
+
+func init() {
+	SetLogOutput(os.Stderr)
+}
 
 func doWithLock(f func()) {
 	logMutex.Lock()
@@ -37,7 +45,20 @@ func checkLogLevel(level int) bool {
 
 func SetLogOutput(w io.Writer) {
 	doWithLock(func() {
-		logOuput = w
+		logOutput = w
+		if w, ok := logOutput.(*os.File); !ok || os.Getenv("TERM") == "dumb" ||
+			(!isatty.IsTerminal(w.Fd()) && !isatty.IsCygwinTerminal(w.Fd())) {
+			logOutputIsTerm = false
+		} else {
+			logOutputIsTerm = true
+		}
+	})
+}
+
+// if v is false, disable output color
+func SetLogColor(v bool) {
+	doWithLock(func() {
+		logColor = v
 	})
 }
 
@@ -70,21 +91,47 @@ func (l *Logger) write(level int, format string, ln bool, v ...any) {
 		return
 	}
 	buf := &strings.Builder{}
-	buf.WriteString(time.Now().Format("2006-01-02T15:04:05.000Z0700  "))
+
+	var (
+		green        string
+		white        string
+		gray         string
+		yellow       string
+		red          string
+		whiteFgRedBg string
+		blue         string
+		// magenta      string
+		cyan  string
+		reset string
+	)
+
+	if logColor && logOutputIsTerm {
+		green = "\033[32m"
+		white = "\033[97m"
+		gray = "\033[90m"
+		yellow = "\033[93m"
+		red = "\033[91m"
+		whiteFgRedBg = "\033[97;41m"
+		blue = "\033[94m"
+		// magenta = "\033[35m"
+		cyan = "\033[36m"
+		reset = "\033[0m"
+	}
+	buf.WriteString(green + time.Now().Format("2006-01-02T15:04:05.000Z0700") + reset + "  ")
 
 	switch level {
 	case LDEBUG:
-		buf.WriteString("DEBUG")
+		buf.WriteString(blue + "DEBUG" + reset)
 	case LINFO:
-		buf.WriteString("INFO")
+		buf.WriteString(white + "INFO" + reset)
 	case LWARN:
-		buf.WriteString("WARN")
+		buf.WriteString(yellow + "WARN" + reset)
 	case LERROR:
-		buf.WriteString("ERROR")
+		buf.WriteString(red + "ERROR" + reset)
 	case LFATAL:
-		buf.WriteString("FATAL")
+		buf.WriteString(whiteFgRedBg + "FATAL" + reset)
 	default:
-		buf.WriteString("UNKNOWN")
+		buf.WriteString(gray + "UNKNOWN" + reset)
 	}
 	buf.WriteString("  ")
 	_, file, line, _ := runtime.Caller(2)
@@ -94,7 +141,8 @@ func (l *Logger) write(level int, format string, ln bool, v ...any) {
 	if index > -1 {
 		file = file[index+1:]
 	}
-	buf.WriteString(file + ":" + strconv.Itoa(line) + "  ")
+	buf.WriteString(cyan + file + reset + ":" + cyan + strconv.Itoa(line) + reset + "  ")
+	// buf.WriteString(magenta + l.prefix + reset)
 	buf.WriteString(l.prefix)
 	if format == "" {
 		if ln {
@@ -108,7 +156,7 @@ func (l *Logger) write(level int, format string, ln bool, v ...any) {
 		buf.WriteByte('\n')
 	}
 	doWithLock(func() {
-		fmt.Fprint(logOuput, buf.String())
+		fmt.Fprint(logOutput, buf.String())
 	})
 }
 
