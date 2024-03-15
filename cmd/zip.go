@@ -197,7 +197,7 @@ var zipCmd = &cobra.Command{
 			os.Remove(f.Name())
 			logger.Fatalln(fatalErr)
 		} else {
-			logger.Warnln("total time:", end.Sub(start))
+			logger.Infoln("total time:", end.Sub(start))
 		}
 	},
 }
