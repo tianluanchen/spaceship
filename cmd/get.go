@@ -52,6 +52,7 @@ var getCmd = &cobra.Command{
 		}
 		overwrite, _ := cmd.Flags().GetBool("overwrite")
 
+		tempFile := localFile
 		if info, err := os.Stat(localFile); err == nil {
 			if info.IsDir() {
 				logger.Fatalf("%s is a directory", localFile)
@@ -59,12 +60,14 @@ var getCmd = &cobra.Command{
 			if !overwrite {
 				logger.Fatalf("%s already exists, you should use --overwrite", localFile)
 			}
-			logger.Warnf("%s already exists, it will be overwritten", localFile)
+			logger.Warnf("%s already exists, it will be overwritten after download finished", localFile)
+			tempFile = path.Join(path.Dir(localFile), path.Base(localFile)+".temp")
+			logger.Debugln("temp file:", tempFile)
 		}
 
 		var bar *progressbar.ProgressBar
 		logger.Debugln("target url:", client.GetDownloadFileURL(remoteFile))
-		if err := client.Get(num, remoteFile, localFile, func(beforeDownload bool, supported bool, length int64, n int) {
+		if err := client.Get(num, remoteFile, tempFile, func(beforeDownload bool, supported bool, length int64, n int) {
 			if beforeDownload {
 				if !supported {
 					logger.Warnln("not support ranges")
@@ -84,6 +87,13 @@ var getCmd = &cobra.Command{
 		bar.Clear()
 		bar.Close()
 		fmt.Println(bar.String())
+		if tempFile != localFile {
+			if err := os.Rename(tempFile, localFile); err != nil {
+				logger.Fatalf("rename %s to %s failed: %s", tempFile, localFile, err.Error())
+			} else {
+				logger.Debugf("rename %s to %s success", tempFile, localFile)
+			}
+		}
 		logger.Infoln("download success")
 	},
 }
